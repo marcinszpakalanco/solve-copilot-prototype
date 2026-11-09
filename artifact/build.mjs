@@ -18,5 +18,6 @@ const html = `<title>Solve Copilot prototype</title>
 <style>${css}</style>
 <div id="root"></div>
 <script>${js.replace(/<\/script/gi, '<\\/script')}</script>`;
+fs.mkdirSync('artifact/out', { recursive: true });
 fs.writeFileSync('artifact/out/solve-copilot.html', html);
 console.log('js', js.length, 'css', css.length, 'html', html.length);
