@@ -1,0 +1,113 @@
+/* Purged at build time from the Serenity plugin motion.css (Nov 9, 2026): only the patterns this prototype uses. */
+.motion-feedback-hover{transition-property: background-color, color, border-color, fill, stroke, text-decoration-color;
+  transition-duration: var(--motion-duration-feedback);
+  transition-timing-function: var(--motion-easing-default);}
+.motion-feedback-press{transition-property: background-color, color, border-color, transform;
+  transition-duration: var(--motion-duration-feedback);
+  transition-timing-function: var(--motion-easing-default);}
+.motion-feedback-press:is([data-pressed], :active){transform: scale(var(--motion-scale-press));}
+.motion-feedback-select{transition-property: background-color, color, border-color;
+  transition-duration: var(--motion-duration-feedback);
+  transition-timing-function: var(--motion-easing-default);}
+.motion-feedback-select [data-motion-part="mark"]{opacity: 0;
+  transform: scale(var(--motion-scale-pop));
+  transition: opacity var(--motion-duration-toggle) var(--motion-easing-default), transform var(--motion-duration-toggle) var(--motion-easing-default);}
+.motion-feedback-select:is([data-selected], [aria-checked="true"], [aria-pressed="true"], :has(> input:checked)) [data-motion-part="mark"]{opacity: 1; transform: none;}
+@media (prefers-reduced-motion: reduce){.motion-feedback-select [data-motion-part="mark"]{transition: opacity var(--motion-duration-feedback) var(--motion-easing-default);}}
+.motion-feedback-rotate{transition: transform var(--motion-duration-toggle) var(--motion-easing-default);}
+.motion-feedback-rotate[data-expanded], [aria-expanded="true"] .motion-feedback-rotate, [data-expanded] > * > .motion-feedback-rotate{transform: rotate(180deg);}
+.motion-feedback-icon{display: inline-grid;}
+.motion-feedback-icon > [data-motion-part]{grid-area: 1 / 1;
+  transition: opacity var(--motion-duration-toggle) var(--motion-easing-default), transform var(--motion-duration-toggle) var(--motion-easing-default);}
+.motion-feedback-icon > [data-motion-part="on"],
+:is([data-selected], [aria-pressed="true"], .is-on) > .motion-feedback-icon > [data-motion-part="off"],
+.motion-feedback-icon:is([data-selected], .is-on) > [data-motion-part="off"]{opacity: 0; transform: scale(var(--motion-scale-pop));}
+:is([data-selected], [aria-pressed="true"], .is-on) > .motion-feedback-icon > [data-motion-part="on"],
+.motion-feedback-icon:is([data-selected], .is-on) > [data-motion-part="on"]{opacity: 1; transform: none;}
+.motion-feedback-icon[data-motion-play] > [data-motion-part="on"]{animation: motion-feedback-icon var(--motion-spring-bouncy-settle) var(--motion-spring-bouncy-easing);}
+@media (prefers-reduced-motion: reduce){.motion-feedback-icon > [data-motion-part]{transition: opacity var(--motion-duration-feedback) var(--motion-easing-default);}}
+.motion-feedback-label{display: inline-grid;
+  interpolate-size: allow-keywords;
+  transition: width var(--motion-duration-toggle) var(--motion-easing-default);}
+.motion-feedback-label > *{grid-area: 1 / 1;}
+.motion-feedback-label > [data-motion-part="enter"]{animation: motion-feedback-value var(--motion-duration-toggle) var(--motion-easing-default) both;}
+.motion-feedback-label > [data-motion-part="leave"]{animation: motion-feedback-value-leave var(--motion-duration-toggle) var(--motion-easing-default) forwards;}
+@media (prefers-reduced-motion: reduce){.motion-feedback-label > :is([data-motion-part="enter"], [data-motion-part="leave"]){animation-duration: var(--motion-duration-feedback);}}
+.motion-enter-fade{animation: motion-enter-fade var(--motion-duration-enter-s) var(--motion-easing-enter) both;}
+:is(.motion-enter-slide, .motion-exit-slide){--motion-from-x: 0px; --motion-from-y: calc(var(--motion-distance-s) * -1);}
+:is(.motion-enter-slide, .motion-exit-slide)[data-placement^="top"]{--motion-from-y: var(--motion-distance-s);}
+:is(.motion-enter-slide, .motion-exit-slide)[data-placement^="left"]{--motion-from-x: var(--motion-distance-s); --motion-from-y: 0px;}
+:is(.motion-enter-slide, .motion-exit-slide)[data-placement^="right"]{--motion-from-x: calc(var(--motion-distance-s) * -1); --motion-from-y: 0px;}
+.motion-enter-slide{animation: motion-enter-slide var(--motion-duration-enter-s) var(--motion-easing-enter) both;}
+.motion-exit-slide:is([data-exiting], .is-exiting){animation: motion-exit-slide var(--motion-duration-exit-s) var(--motion-easing-exit) forwards;}
+:is(.motion-enter-pop, .motion-exit-pop){transform-origin: var(--trigger-anchor-point, center);}
+.motion-enter-pop{animation: motion-enter-pop var(--motion-duration-enter-s) var(--motion-easing-enter) both;}
+.motion-exit-pop:is([data-exiting], .is-exiting){animation: motion-exit-pop var(--motion-duration-exit-s) var(--motion-easing-exit) forwards;}
+.motion-enter-scrim{animation: motion-enter-fade var(--motion-duration-enter-m) var(--motion-easing-enter) both;}
+.motion-enter-scrim[data-motion-size="s"]{animation-duration: var(--motion-duration-enter-s);}
+.motion-enter-scrim[data-motion-size="l"]{animation-duration: var(--motion-duration-enter-l);}
+.motion-exit-scrim:is([data-exiting], .is-exiting){animation: motion-exit-fade var(--motion-duration-exit-m) var(--motion-easing-exit) forwards;}
+.motion-exit-scrim:is([data-exiting], .is-exiting)[data-motion-size="s"]{animation-duration: var(--motion-duration-exit-s);}
+.motion-exit-scrim:is([data-exiting], .is-exiting)[data-motion-size="l"]{animation-duration: var(--motion-duration-exit-l);}
+:is(.motion-enter-sheet, .motion-exit-sheet){--motion-sheet-from: translateY(100%);}
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="top"]{--motion-sheet-from: translateY(-100%);}
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="start"]{--motion-sheet-from: translateX(-100%);}
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="end"]{--motion-sheet-from: translateX(100%);}
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="start"]:dir(rtl){--motion-sheet-from: translateX(100%);}
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="end"]:dir(rtl){--motion-sheet-from: translateX(-100%);}
+.motion-enter-sheet{animation: motion-enter-sheet var(--motion-duration-enter-m) var(--motion-easing-enter) both;}
+.motion-enter-sheet[data-motion-size="l"]{animation-duration: var(--motion-duration-enter-l);}
+@media (prefers-reduced-motion: reduce){.motion-enter-sheet{animation-name: motion-enter-fade;}}
+.motion-exit-sheet:is([data-exiting], .is-exiting){animation: motion-exit-sheet var(--motion-duration-exit-m) var(--motion-easing-exit) forwards;}
+.motion-exit-sheet:is([data-exiting], .is-exiting)[data-motion-size="l"]{animation-duration: var(--motion-duration-exit-l);}
+@media (prefers-reduced-motion: reduce){.motion-exit-sheet:is([data-exiting], .is-exiting){animation-name: motion-exit-fade;}}
+.motion-enter-item{interpolate-size: allow-keywords;
+  overflow: clip;
+  animation: motion-enter-item var(--motion-duration-enter-s) var(--motion-easing-enter) calc(var(--i, 0) * var(--motion-duration-stagger)) both;}
+@media (prefers-reduced-motion: reduce){.motion-enter-item{animation-name: motion-enter-fade;}}
+.motion-enter-stream [data-motion-part="chunk"]{animation: motion-enter-fade var(--motion-duration-feedback) var(--motion-easing-enter) both;}
+.motion-enter-stream [data-motion-part="caret"]{animation: motion-enter-stream var(--motion-duration-loop-shimmer) var(--motion-easing-loop) infinite;}
+.motion-enter-stream:not([aria-busy="true"]) [data-motion-part="caret"]{display: none;}
+.motion-expand-height{height: var(--disclosure-panel-height, auto);
+  overflow: clip;
+  transition: height var(--motion-duration-exit-s) var(--motion-easing-exit);}
+.motion-expand-height > *{opacity: 0; transition: opacity var(--motion-duration-exit-s) var(--motion-easing-exit);}
+:is([data-expanded], [aria-expanded="true"]) > .motion-expand-height, .motion-expand-height[data-expanded]{transition: height var(--motion-duration-enter-s) var(--motion-easing-enter);}
+:is([data-expanded], [aria-expanded="true"]) > .motion-expand-height > *, .motion-expand-height[data-expanded] > *{opacity: 1; transition: opacity var(--motion-duration-enter-s) var(--motion-easing-enter);}
+@media (prefers-reduced-motion: reduce){.motion-expand-height, :is([data-expanded], [aria-expanded="true"]) > .motion-expand-height, .motion-expand-height[data-expanded]{transition: none;}}
+.motion-expand-width{width: var(--disclosure-panel-width, auto);
+  overflow: clip;
+  transition: width var(--motion-duration-exit-m) var(--motion-easing-exit);}
+:is([data-expanded], [aria-expanded="true"]) > .motion-expand-width, .motion-expand-width[data-expanded]{transition: width var(--motion-duration-enter-m) var(--motion-easing-enter);}
+@media (prefers-reduced-motion: reduce){.motion-expand-width, :is([data-expanded], [aria-expanded="true"]) > .motion-expand-width, .motion-expand-width[data-expanded]{transition: none;}}
+:root.motion-navigate-fade::view-transition-old(root){animation: motion-exit-fade var(--motion-duration-exit-s) var(--motion-easing-default) both;}
+:root.motion-navigate-fade::view-transition-new(root){animation: motion-enter-fade var(--motion-duration-enter-s) var(--motion-easing-default) var(--motion-duration-exit-s) both;}
+.motion-navigate-fade:not(:root){animation: motion-enter-fade var(--motion-duration-enter-s) var(--motion-easing-default) both;}
+.motion-loop-spin{animation: motion-loop-spin var(--motion-duration-loop-spin) var(--motion-easing-loop) infinite;}
+.motion-loop-shimmer{background-image: linear-gradient(90deg, var(--color-text-secondary) 0%, var(--color-text-secondary) 30%, var(--motion-shimmer-surface, var(--color-surface-default)) 50%, var(--color-text-secondary) 70%, var(--color-text-secondary) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: motion-loop-shimmer var(--motion-duration-loop-shimmer) var(--motion-easing-loop) infinite;}
+.motion-loop-shimmer[data-motion-part="skeleton"], .motion-loop-shimmer [data-motion-part="skeleton"]{background-image: linear-gradient(90deg, var(--color-surface-sunken) 0%, var(--color-surface-sunken) 30%, var(--color-fill-tertiary-hover) 50%, var(--color-surface-sunken) 70%, var(--color-surface-sunken) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  animation: motion-loop-shimmer var(--motion-duration-loop-shimmer) var(--motion-easing-loop) infinite;}
+@media (prefers-reduced-motion: reduce){.motion-loop-shimmer{animation: none; background-image: none; color: var(--color-text-secondary);}.motion-loop-shimmer[data-motion-part="skeleton"], .motion-loop-shimmer [data-motion-part="skeleton"]{animation: none; background-image: none; background-color: var(--color-surface-sunken);}}
+@keyframes motion-feedback-icon{from { transform: scale(var(--motion-scale-celebrate)); }}
+@keyframes motion-feedback-value{from { opacity: 0; transform: translateY(var(--motion-distance-s)); }}
+@keyframes motion-feedback-value-leave{to { opacity: 0; transform: translateY(calc(var(--motion-distance-s) * -1)); }}
+@keyframes motion-enter-fade{from { opacity: 0; }}
+@keyframes motion-exit-fade{to { opacity: 0; }}
+@keyframes motion-enter-slide{from { opacity: 0; transform: translate(var(--motion-from-x), var(--motion-from-y)); }}
+@keyframes motion-exit-slide{to { opacity: 0; transform: translate(var(--motion-from-x), var(--motion-from-y)); }}
+@keyframes motion-enter-pop{from { opacity: 0; transform: scale(var(--motion-scale-pop)); }}
+@keyframes motion-exit-pop{to { opacity: 0; transform: scale(var(--motion-scale-pop)); }}
+@keyframes motion-enter-sheet{from { transform: var(--motion-sheet-from); }}
+@keyframes motion-exit-sheet{to { transform: var(--motion-sheet-from); }}
+@keyframes motion-enter-item{from { opacity: 0; block-size: 0; }}
+@keyframes motion-enter-stream{50% { opacity: 0; }}
+@keyframes motion-loop-spin{to { transform: rotate(360deg); }}
+@keyframes motion-loop-shimmer{from { background-position: 100% 0; } to { background-position: -100% 0; }}

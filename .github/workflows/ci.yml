@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      - name: QA (screens at 1440, 768, 390 in Light and Dark, axe WCAG 2.2 AA, focus ring, reduced motion)
+        run: npm run qa
+      - name: Phone page for the Claude artifact
+        run: npm run build:artifact && npm run test:flow
+      - name: Keep the screenshots and the phone page
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-report
+          path: |
+            qa/report/
+            artifact/out/

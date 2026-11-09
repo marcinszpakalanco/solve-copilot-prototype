@@ -1,0 +1,520 @@
+/* Serenity motion patterns in CSS (task design-sites-adoption M3, 2026-10-27).
+   One class per pattern of chapter 07 (src/docs/07-motion.md § Motion patterns): Enter/Pop is .motion-enter-pop, and a
+   pattern that runs as a keyframe animation has @keyframes of the same name. Built only from the --motion-* properties of
+   the token build (tokens.css): no ms, no cubic-bezier, no travel or scale typed here.
+   Reduced motion: the token build switches the Motion collection to its Reduced mode under prefers-reduced-motion
+   (Distance 0, Scale 1, Duration/Toggle 0, Stagger 0, every spring Bounce 0). A pattern whose travel is a token needs no
+   rule of its own ("reduced: tokens"); travel no token carries (a sheet's own height, a loop, parallax) has its own rule.
+   Triggers are React Aria's state attributes (chapter 07 § Triggers) with the native state beside them. Parts and one-shot
+   plays use data attributes: data-motion-part names a part, data-motion-play starts a one-shot animation (the script
+   removes it on animationend), --i is an item's index for a stagger.
+   Every block starts with an @pattern line: name, trigger, reduced behaviour. assets/motion/check_motion.py keeps the list
+   equal to chapter 07 and the values on tokens. Source of truth: this file. The sites copy it to src/styles/motion.css
+   when they build their tokens (scripts/build-tokens.mjs); the agent kit ships it beside references/motion.md. */
+
+
+/* ---------- Feedback: the state of one control ---------- */
+
+/* @pattern Feedback/Hover | trigger hover | reduced: same (colour only) */
+.motion-feedback-hover {
+  transition-property: background-color, color, border-color, fill, stroke, text-decoration-color;
+  transition-duration: var(--motion-duration-feedback);
+  transition-timing-function: var(--motion-easing-default);
+}
+
+/* @pattern Feedback/Press | trigger press | reduced: tokens (Scale/Press is 1, the colour stays) */
+.motion-feedback-press {
+  transition-property: background-color, color, border-color, transform;
+  transition-duration: var(--motion-duration-feedback);
+  transition-timing-function: var(--motion-easing-default);
+}
+.motion-feedback-press:is([data-pressed], :active) { transform: scale(var(--motion-scale-press)); }
+
+/* @pattern Feedback/Select | trigger select | reduced: rule (the mark fades over Duration/Feedback, no scale) */
+.motion-feedback-select {
+  transition-property: background-color, color, border-color;
+  transition-duration: var(--motion-duration-feedback);
+  transition-timing-function: var(--motion-easing-default);
+}
+.motion-feedback-select [data-motion-part="mark"] {
+  opacity: 0;
+  transform: scale(var(--motion-scale-pop));
+  transition: opacity var(--motion-duration-toggle) var(--motion-easing-default), transform var(--motion-duration-toggle) var(--motion-easing-default);
+}
+.motion-feedback-select:is([data-selected], [aria-checked="true"], [aria-pressed="true"], :has(> input:checked)) [data-motion-part="mark"] { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-select [data-motion-part="mark"] { transition: opacity var(--motion-duration-feedback) var(--motion-easing-default); }
+}
+
+/* @pattern Feedback/Toggle | trigger select on a Switch | reduced: rule (the thumb jumps, the track colour fades) */
+.motion-feedback-toggle { transition: background-color var(--motion-duration-feedback) var(--motion-easing-default); }
+.motion-feedback-toggle [data-motion-part="thumb"] { transition: transform var(--motion-spring-snappy-settle) var(--motion-spring-snappy-easing); }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-toggle [data-motion-part="thumb"] { transition: none; }
+}
+
+/* @pattern Feedback/Indicator | trigger select in a group of options | reduced: rule (no slide: the indicator jumps and fades in) */
+.motion-feedback-indicator :is([data-motion-part="indicator"], .react-aria-SelectionIndicator) {
+  transition-property: translate, transform, inset, width, height;
+  transition-duration: var(--motion-spring-snappy-settle);
+  transition-timing-function: var(--motion-spring-snappy-easing);
+}
+.motion-feedback-indicator [data-motion-part="item"] { transition: color var(--motion-duration-feedback) var(--motion-easing-default); }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-indicator :is([data-motion-part="indicator"], .react-aria-SelectionIndicator) {
+    transition-property: none;
+    animation: motion-enter-fade var(--motion-duration-feedback) var(--motion-easing-default);
+  }
+}
+
+/* @pattern Feedback/Rotate | trigger expand | reduced: tokens (Duration/Toggle is 0, the chevron turns at once) */
+.motion-feedback-rotate { transition: transform var(--motion-duration-toggle) var(--motion-easing-default); }
+.motion-feedback-rotate[data-expanded], [aria-expanded="true"] .motion-feedback-rotate, [data-expanded] > * > .motion-feedback-rotate { transform: rotate(180deg); }
+
+/* @pattern Feedback/Icon | trigger the person's press, a result or an arrival | reduced: rule (cross-fade only, no pop)
+   Animated icons play in JavaScript (AnimatedIcon, Lottie, chapter 10 § Animated icons). This class is the swap of two
+   static icons (data-motion-part="on" and "off") and the pop to Scale/Celebrate on Spring/Bouncy (data-motion-play). */
+.motion-feedback-icon { display: inline-grid; }
+.motion-feedback-icon > [data-motion-part] {
+  grid-area: 1 / 1;
+  transition: opacity var(--motion-duration-toggle) var(--motion-easing-default), transform var(--motion-duration-toggle) var(--motion-easing-default);
+}
+.motion-feedback-icon > [data-motion-part="on"],
+:is([data-selected], [aria-pressed="true"], .is-on) > .motion-feedback-icon > [data-motion-part="off"],
+.motion-feedback-icon:is([data-selected], .is-on) > [data-motion-part="off"] { opacity: 0; transform: scale(var(--motion-scale-pop)); }
+:is([data-selected], [aria-pressed="true"], .is-on) > .motion-feedback-icon > [data-motion-part="on"],
+.motion-feedback-icon:is([data-selected], .is-on) > [data-motion-part="on"] { opacity: 1; transform: none; }
+.motion-feedback-icon[data-motion-play] > [data-motion-part="on"] { animation: motion-feedback-icon var(--motion-spring-bouncy-settle) var(--motion-spring-bouncy-easing); }
+@keyframes motion-feedback-icon { from { transform: scale(var(--motion-scale-celebrate)); } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-icon > [data-motion-part] { transition: opacity var(--motion-duration-feedback) var(--motion-easing-default); }
+}
+
+/* @pattern Feedback/Result | trigger the end of something the person did | reduced: rule (the rest pose fades in, the copy and action appear without travel)
+   The mark plays in JavaScript (ResultAnimation, chapter 10 § Result animations), which sets --motion-result-copy and
+   --motion-result-mark from its copy and mark markers; this class brings the headline and the action in on them. */
+.motion-feedback-result [data-motion-part="copy"] { animation: motion-enter-text var(--motion-duration-enter-m) var(--motion-easing-enter) var(--motion-result-copy, 0s) both; }
+.motion-feedback-result [data-motion-part="action"] { animation: motion-enter-fade var(--motion-duration-enter-m) var(--motion-easing-enter) var(--motion-result-mark, 0s) both; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-result :is([data-motion-part="copy"], [data-motion-part="action"]) { animation: motion-enter-fade var(--motion-duration-enter-m) var(--motion-easing-enter) both; }
+}
+
+/* @pattern Feedback/Lift | trigger hover on a card | reduced: same (an effect; the card's own Elevation/Raised style) */
+.motion-feedback-lift { transition: box-shadow var(--motion-duration-feedback) var(--motion-easing-default); }
+
+/* @pattern Feedback/Focus | trigger focusVisible | reduced: same (the ring is instant in both modes)
+   The ring is information, never animated: while focused, the focus ring's properties leave the transition list, even
+   when another pattern (Feedback/Lift) transitions box-shadow. */
+.motion-feedback-focus:is([data-focus-visible], :focus-visible) { transition-property: background-color, color, border-color, transform, opacity; }
+
+/* @pattern Feedback/Value | trigger a shown number changes | reduced: rule (the digit cross-fades over Duration/Feedback)
+   JavaScript renders each digit in a slot (data-motion-part="slot") and, for a digit that changes, the old one as
+   data-motion-part="leave" and the new one as "enter"; digits that stay are never re-rendered. */
+.motion-feedback-value { display: inline-flex; font-variant-numeric: tabular-nums; }
+.motion-feedback-value [data-motion-part="slot"] { display: inline-grid; overflow: clip; }
+.motion-feedback-value [data-motion-part="slot"] > * { grid-area: 1 / 1; }
+.motion-feedback-value [data-motion-part="enter"] { animation: motion-feedback-value var(--motion-duration-toggle) var(--motion-easing-default) both; }
+.motion-feedback-value [data-motion-part="leave"] { animation: motion-feedback-value-leave var(--motion-duration-toggle) var(--motion-easing-default) forwards; }
+@keyframes motion-feedback-value { from { opacity: 0; transform: translateY(var(--motion-distance-s)); } }
+@keyframes motion-feedback-value-leave { to { opacity: 0; transform: translateY(calc(var(--motion-distance-s) * -1)); } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-value :is([data-motion-part="enter"], [data-motion-part="leave"]) { animation-duration: var(--motion-duration-feedback); }
+}
+
+/* @pattern Feedback/Label | trigger a control's state word changes | reduced: rule (cross-fade over Duration/Feedback, the width switches)
+   JavaScript keeps the old label as data-motion-part="leave" until its animation ends and adds the new one as "enter". */
+.motion-feedback-label {
+  display: inline-grid;
+  interpolate-size: allow-keywords;
+  transition: width var(--motion-duration-toggle) var(--motion-easing-default);
+}
+.motion-feedback-label > * { grid-area: 1 / 1; }
+.motion-feedback-label > [data-motion-part="enter"] { animation: motion-feedback-value var(--motion-duration-toggle) var(--motion-easing-default) both; }
+.motion-feedback-label > [data-motion-part="leave"] { animation: motion-feedback-value-leave var(--motion-duration-toggle) var(--motion-easing-default) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-feedback-label > :is([data-motion-part="enter"], [data-motion-part="leave"]) { animation-duration: var(--motion-duration-feedback); }
+}
+
+/* @pattern Feedback/Error | trigger a failed submit, once | reduced: tokens (Distance/S is 0, nothing moves; the colour and message carry the error)
+   JavaScript sets data-motion-play on the field or group after a failed submit and removes it on animationend. */
+.motion-feedback-error[data-motion-play] { animation: motion-feedback-error var(--motion-duration-enter-m) var(--motion-easing-default); }
+@keyframes motion-feedback-error {
+  25% { transform: translateX(var(--motion-distance-s)); }
+  50% { transform: translateX(calc(var(--motion-distance-s) * -1)); }
+  75% { transform: translateX(calc(var(--motion-distance-s) / 2)); }
+}
+
+/* @pattern Feedback/Pending | trigger isPending on a Button | reduced: tokens (the spinner keeps turning on Loop/Spin)
+   Inside the Button: a wrapper with this class holding data-motion-part="label" and a spinner (.motion-loop-spin) as
+   data-motion-part="spinner"; React Aria's data-pending on the Button swaps them. */
+.motion-feedback-pending { display: inline-grid; place-items: center; }
+.motion-feedback-pending > [data-motion-part] { grid-area: 1 / 1; transition: opacity var(--motion-duration-feedback) var(--motion-easing-default); }
+.motion-feedback-pending > [data-motion-part="spinner"],
+:is([data-pending], [aria-busy="true"]) > .motion-feedback-pending > [data-motion-part="label"],
+.motion-feedback-pending[data-pending] > [data-motion-part="label"] { opacity: 0; }
+:is([data-pending], [aria-busy="true"]) > .motion-feedback-pending > [data-motion-part="spinner"],
+.motion-feedback-pending[data-pending] > [data-motion-part="spinner"] { opacity: 1; }
+
+/* @pattern Feedback/Nudge | trigger hover, pointer only | reduced: tokens (Distance/S is 0; Feedback/Hover stays)
+   The trailing icon is data-motion-part="nudge" (data-motion-direction="down" for a chevron that points down); in an
+   AvatarGroup every avatar is data-motion-part="spread" with --i. */
+.motion-feedback-nudge :is([data-motion-part="nudge"], [data-motion-part="spread"]) { transition: transform var(--motion-duration-feedback) var(--motion-easing-default); }
+@media (hover: hover) {
+  .motion-feedback-nudge:is(:hover, [data-hovered]) [data-motion-part="nudge"] { transform: translateX(var(--motion-distance-s)); }
+  .motion-feedback-nudge:is(:hover, [data-hovered]) [data-motion-part="nudge"]:dir(rtl) { transform: translateX(calc(var(--motion-distance-s) * -1)); }
+  .motion-feedback-nudge:is(:hover, [data-hovered]) [data-motion-part="nudge"][data-motion-direction="down"] { transform: translateY(var(--motion-distance-s)); }
+  .motion-feedback-nudge:is(:hover, [data-hovered]) [data-motion-part="spread"] { transform: translateX(calc(var(--motion-distance-s) * var(--i, 0))); }
+}
+
+
+/* ---------- Enter and Exit: overlays and inserted content ----------
+   An element takes the Enter class, the Exit class, or both. Enter plays when the element renders (React Aria also marks
+   it data-entering); Exit plays on React Aria's data-exiting, or on .is-exiting set by a script that removes the element
+   on animationend. Reduced for the whole family: opacity only. */
+
+/* @pattern Enter/Fade | trigger enter | reduced: same (opacity) */
+.motion-enter-fade { animation: motion-enter-fade var(--motion-duration-enter-s) var(--motion-easing-enter) both; }
+@keyframes motion-enter-fade { from { opacity: 0; } }
+
+/* @pattern Exit/Fade | trigger exit | reduced: same (opacity) */
+.motion-exit-fade:is([data-exiting], .is-exiting) { animation: motion-exit-fade var(--motion-duration-exit-s) var(--motion-easing-exit) forwards; }
+@keyframes motion-exit-fade { to { opacity: 0; } }
+
+/* @pattern Enter/Slide | trigger enter, direction from data-placement | reduced: tokens (Distance/S is 0, the fade stays) */
+:is(.motion-enter-slide, .motion-exit-slide) { --motion-from-x: 0px; --motion-from-y: calc(var(--motion-distance-s) * -1); }
+:is(.motion-enter-slide, .motion-exit-slide)[data-placement^="top"] { --motion-from-y: var(--motion-distance-s); }
+:is(.motion-enter-slide, .motion-exit-slide)[data-placement^="left"] { --motion-from-x: var(--motion-distance-s); --motion-from-y: 0px; }
+:is(.motion-enter-slide, .motion-exit-slide)[data-placement^="right"] { --motion-from-x: calc(var(--motion-distance-s) * -1); --motion-from-y: 0px; }
+.motion-enter-slide { animation: motion-enter-slide var(--motion-duration-enter-s) var(--motion-easing-enter) both; }
+@keyframes motion-enter-slide { from { opacity: 0; transform: translate(var(--motion-from-x), var(--motion-from-y)); } }
+
+/* @pattern Exit/Slide | trigger exit | reduced: tokens (Distance/S is 0, the fade stays) */
+.motion-exit-slide:is([data-exiting], .is-exiting) { animation: motion-exit-slide var(--motion-duration-exit-s) var(--motion-easing-exit) forwards; }
+@keyframes motion-exit-slide { to { opacity: 0; transform: translate(var(--motion-from-x), var(--motion-from-y)); } }
+
+/* @pattern Enter/Pop | trigger enter, from the trigger's anchor point (a Badge from its own centre) | reduced: tokens (Scale/Pop is 1) */
+:is(.motion-enter-pop, .motion-exit-pop) { transform-origin: var(--trigger-anchor-point, center); }
+.motion-enter-pop { animation: motion-enter-pop var(--motion-duration-enter-s) var(--motion-easing-enter) both; }
+@keyframes motion-enter-pop { from { opacity: 0; transform: scale(var(--motion-scale-pop)); } }
+
+/* @pattern Exit/Pop | trigger exit | reduced: tokens (Scale/Pop is 1) */
+.motion-exit-pop:is([data-exiting], .is-exiting) { animation: motion-exit-pop var(--motion-duration-exit-s) var(--motion-easing-exit) forwards; }
+@keyframes motion-exit-pop { to { opacity: 0; transform: scale(var(--motion-scale-pop)); } }
+
+/* @pattern Enter/Dialog | trigger enter, from the centre | reduced: tokens (Scale/Pop is 1) */
+.motion-enter-dialog { animation: motion-enter-pop var(--motion-duration-enter-m) var(--motion-easing-enter) both; transform-origin: center; }
+
+/* @pattern Exit/Dialog | trigger exit | reduced: tokens (Scale/Pop is 1) */
+.motion-exit-dialog:is([data-exiting], .is-exiting) { animation: motion-exit-pop var(--motion-duration-exit-m) var(--motion-easing-exit) forwards; transform-origin: center; }
+
+/* @pattern Enter/Scrim | trigger enter, with its overlay's size (data-motion-size s, m or l; m when absent) | reduced: same (opacity) */
+.motion-enter-scrim { animation: motion-enter-fade var(--motion-duration-enter-m) var(--motion-easing-enter) both; }
+.motion-enter-scrim[data-motion-size="s"] { animation-duration: var(--motion-duration-enter-s); }
+.motion-enter-scrim[data-motion-size="l"] { animation-duration: var(--motion-duration-enter-l); }
+
+/* @pattern Exit/Scrim | trigger exit, with its overlay's size | reduced: same (opacity) */
+.motion-exit-scrim:is([data-exiting], .is-exiting) { animation: motion-exit-fade var(--motion-duration-exit-m) var(--motion-easing-exit) forwards; }
+.motion-exit-scrim:is([data-exiting], .is-exiting)[data-motion-size="s"] { animation-duration: var(--motion-duration-exit-s); }
+.motion-exit-scrim:is([data-exiting], .is-exiting)[data-motion-size="l"] { animation-duration: var(--motion-duration-exit-l); }
+
+/* @pattern Enter/Sheet | trigger enter, the full size from its edge (data-motion-edge bottom, top, start or end; data-motion-size l for a drawer) | reduced: rule (no travel: Enter/Fade)
+   Between snap points a drag follows the finger and the release settles with Spring/Smooth in JavaScript (chapter 14);
+   in React Aria code the browser's scroll snapping settles it. */
+:is(.motion-enter-sheet, .motion-exit-sheet) { --motion-sheet-from: translateY(100%); }
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="top"] { --motion-sheet-from: translateY(-100%); }
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="start"] { --motion-sheet-from: translateX(-100%); }
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="end"] { --motion-sheet-from: translateX(100%); }
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="start"]:dir(rtl) { --motion-sheet-from: translateX(100%); }
+:is(.motion-enter-sheet, .motion-exit-sheet)[data-motion-edge="end"]:dir(rtl) { --motion-sheet-from: translateX(-100%); }
+.motion-enter-sheet { animation: motion-enter-sheet var(--motion-duration-enter-m) var(--motion-easing-enter) both; }
+.motion-enter-sheet[data-motion-size="l"] { animation-duration: var(--motion-duration-enter-l); }
+@keyframes motion-enter-sheet { from { transform: var(--motion-sheet-from); } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-enter-sheet { animation-name: motion-enter-fade; }
+}
+
+/* @pattern Exit/Sheet | trigger exit, back to its edge | reduced: rule (no travel: Exit/Fade) */
+.motion-exit-sheet:is([data-exiting], .is-exiting) { animation: motion-exit-sheet var(--motion-duration-exit-m) var(--motion-easing-exit) forwards; }
+.motion-exit-sheet:is([data-exiting], .is-exiting)[data-motion-size="l"] { animation-duration: var(--motion-duration-exit-l); }
+@keyframes motion-exit-sheet { to { transform: var(--motion-sheet-from); } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-exit-sheet:is([data-exiting], .is-exiting) { animation-name: motion-exit-fade; }
+}
+
+/* @pattern Enter/Toast | trigger enter, Distance/M from the top screen edge | reduced: tokens (Distance/M is 0, the fade stays) */
+.motion-enter-toast { animation: motion-enter-toast var(--motion-duration-enter-m) var(--motion-easing-enter) both; }
+@keyframes motion-enter-toast { from { opacity: 0; transform: translateY(calc(var(--motion-distance-m) * -1)); } }
+
+/* @pattern Exit/Toast | trigger exit (Exit/S) | reduced: tokens (Distance/M is 0, the fade stays) */
+.motion-exit-toast:is([data-exiting], .is-exiting) { animation: motion-exit-toast var(--motion-duration-exit-s) var(--motion-easing-exit) forwards; }
+@keyframes motion-exit-toast { to { opacity: 0; transform: translateY(calc(var(--motion-distance-m) * -1)); } }
+
+/* @pattern Enter/Controls | trigger pointer move, touch or focus over media | reduced: same (opacity)
+   The controls and the Scrim that protects them take the class together; a script hides them after 3 s without input
+   (data-motion-hidden), never while a control is hovered or focused, a menu from them is open or playback is paused. */
+.motion-enter-controls { transition: opacity var(--motion-duration-enter-s) var(--motion-easing-enter); }
+
+/* @pattern Exit/Controls | trigger 3 s without input | reduced: same (opacity) */
+.motion-exit-controls[data-motion-hidden] { opacity: 0; transition: opacity var(--motion-duration-exit-s) var(--motion-easing-exit); }
+
+/* @pattern Enter/Item | trigger an item is inserted, --i apart by Duration/Stagger | reduced: rule (no height change: the item fades in) */
+.motion-enter-item {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  animation: motion-enter-item var(--motion-duration-enter-s) var(--motion-easing-enter) calc(var(--i, 0) * var(--motion-duration-stagger)) both;
+}
+@keyframes motion-enter-item { from { opacity: 0; block-size: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-enter-item { animation-name: motion-enter-fade; }
+}
+
+/* @pattern Exit/Item | trigger an item is removed; the gap closes | reduced: rule (no height change: the item fades out) */
+.motion-exit-item:is([data-exiting], .is-exiting) {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  animation: motion-exit-item var(--motion-duration-exit-s) var(--motion-easing-exit) forwards;
+}
+@keyframes motion-exit-item { to { opacity: 0; block-size: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-exit-item:is([data-exiting], .is-exiting) { animation-name: motion-exit-fade; }
+}
+
+/* @pattern Exit/Dissolve | trigger a cleared value or a removed token | reduced: tokens (Scale/Pop is 1, Distance/S is 0; the fade stays) */
+.motion-exit-dissolve:is([data-exiting], .is-exiting) { animation: motion-exit-dissolve var(--motion-duration-exit-s) var(--motion-easing-exit) forwards; }
+@keyframes motion-exit-dissolve { to { opacity: 0; transform: translateY(calc(var(--motion-distance-s) * -1)) scale(var(--motion-scale-pop)); } }
+
+/* @pattern Enter/Stream | trigger a chunk of streamed text arrives | reduced: tokens (the chunks fade; the caret stops when Duration/Loop/Shimmer is 0)
+   Each chunk is data-motion-part="chunk"; the caret (data-motion-part="caret") blinks once per Duration/Loop/Shimmer
+   while the message is aria-busy, and goes when the stream ends. */
+.motion-enter-stream [data-motion-part="chunk"] { animation: motion-enter-fade var(--motion-duration-feedback) var(--motion-easing-enter) both; }
+.motion-enter-stream [data-motion-part="caret"] { animation: motion-enter-stream var(--motion-duration-loop-shimmer) var(--motion-easing-loop) infinite; }
+.motion-enter-stream:not([aria-busy="true"]) [data-motion-part="caret"] { display: none; }
+@keyframes motion-enter-stream { 50% { opacity: 0; } }
+
+/* @pattern Enter/Text | trigger load or inView, websites only | reduced: tokens (Distance/S and Stagger are 0: the headline fades in at once)
+   A script wraps each rendered line in a span with --i; whole lines only, never words or letters, and the heading keeps
+   its whole text for assistive technology. On inView the lines wait until the heading has .is-in. */
+.motion-enter-text [data-motion-part="line"] { display: inline-block; animation: motion-enter-text var(--motion-duration-enter-m) var(--motion-easing-enter) calc(var(--i, 0) * var(--motion-duration-stagger)) both; }
+.motion-enter-text:not(:has([data-motion-part="line"])) { animation: motion-enter-text var(--motion-duration-enter-m) var(--motion-easing-enter) both; }
+.motion-ready .motion-enter-text[data-motion-trigger="inview"]:not(.is-in),
+.motion-ready .motion-enter-text[data-motion-trigger="inview"]:not(.is-in) [data-motion-part="line"] { animation-play-state: paused; }
+@keyframes motion-enter-text { from { opacity: 0; transform: translateY(var(--motion-distance-s)); } }
+
+/* @pattern Enter/Stack | trigger a new Toast or Banner while others show | reduced: tokens (Scale/Stack is 1, Distance/S is 0: the older ones only dim)
+   A script gives each item --behind (0 for the newest) and, while the stack is open (hover, focus or data-expanded),
+   --motion-offset, the sum of the heights above it. */
+.motion-enter-stack > * {
+  transform: translateY(calc(var(--behind, 0) * var(--motion-distance-s) * -1)) scale(calc(1 - (1 - var(--motion-scale-stack)) * var(--behind, 0)));
+  transition: transform var(--motion-duration-enter-m) var(--motion-easing-default), opacity var(--motion-duration-enter-m) var(--motion-easing-default);
+}
+.motion-enter-stack:is(:hover, :focus-within, [data-expanded]) > * { transform: translateY(var(--motion-offset, 0px)); }
+
+
+/* ---------- Expand: content that opens in place ---------- */
+
+/* @pattern Expand/Height | trigger expand (React Aria's --disclosure-panel-height) | reduced: rule (the size switches, the content fades) */
+.motion-expand-height {
+  height: var(--disclosure-panel-height, auto);
+  overflow: clip;
+  transition: height var(--motion-duration-exit-s) var(--motion-easing-exit);
+}
+.motion-expand-height > * { opacity: 0; transition: opacity var(--motion-duration-exit-s) var(--motion-easing-exit); }
+:is([data-expanded], [aria-expanded="true"]) > .motion-expand-height, .motion-expand-height[data-expanded] { transition: height var(--motion-duration-enter-s) var(--motion-easing-enter); }
+:is([data-expanded], [aria-expanded="true"]) > .motion-expand-height > *, .motion-expand-height[data-expanded] > * { opacity: 1; transition: opacity var(--motion-duration-enter-s) var(--motion-easing-enter); }
+@media (prefers-reduced-motion: reduce) {
+  .motion-expand-height, :is([data-expanded], [aria-expanded="true"]) > .motion-expand-height, .motion-expand-height[data-expanded] { transition: none; }
+}
+
+/* @pattern Expand/Width | trigger expand (React Aria's --disclosure-panel-width) | reduced: rule (the size switches) */
+.motion-expand-width {
+  width: var(--disclosure-panel-width, auto);
+  overflow: clip;
+  transition: width var(--motion-duration-exit-m) var(--motion-easing-exit);
+}
+:is([data-expanded], [aria-expanded="true"]) > .motion-expand-width, .motion-expand-width[data-expanded] { transition: width var(--motion-duration-enter-m) var(--motion-easing-enter); }
+@media (prefers-reduced-motion: reduce) {
+  .motion-expand-width, :is([data-expanded], [aria-expanded="true"]) > .motion-expand-width, .motion-expand-width[data-expanded] { transition: none; }
+}
+
+/* @pattern Expand/Swipe | trigger a trailing swipe on a row | reduced: rule (tracking stays; the settle switches, the actions fade)
+   While data-dragging is on the row its content follows the finger with no transition; on release the script sets the
+   content's transform to open or closed and the transition settles it with Spring/Smooth. */
+.motion-expand-swipe [data-motion-part="content"] { transition: transform var(--motion-spring-smooth-settle) var(--motion-spring-smooth-easing); }
+.motion-expand-swipe [data-motion-part="actions"] { transition: opacity var(--motion-spring-smooth-settle) var(--motion-spring-smooth-easing); }
+.motion-expand-swipe[data-dragging] :is([data-motion-part="content"], [data-motion-part="actions"]) { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-expand-swipe [data-motion-part="content"] { transition: none; }
+  .motion-expand-swipe [data-motion-part="actions"] { transition: opacity var(--motion-duration-feedback) var(--motion-easing-default); }
+}
+
+/* @pattern Expand/Morph | trigger a control turns into its surface, a card changes size | reduced: rule (the size switches, the content fades)
+   The View Transitions API: the shared container takes this class and a view-transition-name. */
+.motion-expand-morph { view-transition-class: motion-expand-morph; }
+::view-transition-group(*.motion-expand-morph) { animation-duration: var(--motion-spring-snappy-settle); animation-timing-function: var(--motion-spring-snappy-easing); }
+::view-transition-old(*.motion-expand-morph), ::view-transition-new(*.motion-expand-morph) { animation-duration: var(--motion-duration-feedback); }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*.motion-expand-morph) { animation: none; }
+}
+
+
+/* ---------- Navigate: between screens and views ----------
+   On the web through the View Transitions API (html takes the class); inside a page the incoming view takes it. */
+
+/* @pattern Navigate/Fade | trigger a top-level destination changes | reduced: same (fade through) */
+:root.motion-navigate-fade::view-transition-old(root) { animation: motion-exit-fade var(--motion-duration-exit-s) var(--motion-easing-default) both; }
+:root.motion-navigate-fade::view-transition-new(root) { animation: motion-enter-fade var(--motion-duration-enter-s) var(--motion-easing-default) var(--motion-duration-exit-s) both; }
+.motion-navigate-fade:not(:root) { animation: motion-enter-fade var(--motion-duration-enter-s) var(--motion-easing-default) both; }
+
+/* @pattern Navigate/Axis | trigger forward or back in a flow (data-motion-direction="back" going back) | reduced: tokens (Distance/L is 0: it becomes Navigate/Fade)
+   A swipe that starts it follows the finger and settles with Spring/Smooth in JavaScript. */
+.motion-navigate-axis { --motion-axis: 1; }
+.motion-navigate-axis[data-motion-direction="back"], :root[data-motion-direction="back"] .motion-navigate-axis { --motion-axis: -1; }
+.motion-navigate-axis:dir(rtl) { --motion-axis: -1; }
+.motion-navigate-axis[data-motion-direction="back"]:dir(rtl) { --motion-axis: 1; }
+.motion-navigate-axis:not(:root) { animation: motion-navigate-axis var(--motion-duration-enter-m) var(--motion-easing-default) both; }
+:root.motion-navigate-axis::view-transition-new(root) { animation: motion-navigate-axis var(--motion-duration-enter-m) var(--motion-easing-default) both; }
+:root.motion-navigate-axis::view-transition-old(root) { animation: motion-exit-fade var(--motion-duration-exit-s) var(--motion-easing-default) both; }
+@keyframes motion-navigate-axis { from { opacity: 0; transform: translateX(calc(var(--motion-distance-l) * var(--motion-axis, 1))); } }
+
+/* @pattern Navigate/Transform | trigger one element becomes its full view | reduced: rule (no morph: Navigate/Fade at Duration/Page)
+   The element and its full view share a view-transition-name; the element takes this class. */
+.motion-navigate-transform { view-transition-class: motion-navigate-transform; }
+::view-transition-group(*.motion-navigate-transform) { animation-duration: var(--motion-duration-page); animation-timing-function: var(--motion-easing-attention); }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*.motion-navigate-transform) { animation: none; }
+  ::view-transition-old(*.motion-navigate-transform) { animation: motion-exit-fade var(--motion-duration-page) var(--motion-easing-default) both; }
+  ::view-transition-new(*.motion-navigate-transform) { animation: motion-enter-fade var(--motion-duration-page) var(--motion-easing-default) both; }
+}
+
+
+/* ---------- Scroll: product UI ----------
+   A script sets the state attribute from the scroll position; bars that hide or minimise stay put while a screen reader
+   runs. */
+
+/* @pattern Scroll/Lift | trigger content scrolls under a bar (data-scrolled) | reduced: same (an effect) */
+.motion-scroll-lift { transition: box-shadow var(--motion-duration-feedback) var(--motion-easing-default), border-color var(--motion-duration-feedback) var(--motion-easing-default); }
+
+/* @pattern Scroll/Hide | trigger scrolling down past a threshold (data-hidden; data-motion-edge="bottom" for a bottom bar) | reduced: rule (the bar stays) */
+.motion-scroll-hide { transition: transform var(--motion-duration-enter-s) var(--motion-easing-enter); }
+.motion-scroll-hide[data-hidden] { transform: translateY(-100%); transition: transform var(--motion-duration-exit-s) var(--motion-easing-exit); }
+.motion-scroll-hide[data-hidden][data-motion-edge="bottom"] { transform: translateY(100%); }
+@media (prefers-reduced-motion: reduce) {
+  .motion-scroll-hide[data-hidden], .motion-scroll-hide[data-hidden][data-motion-edge="bottom"] { transform: none; }
+}
+
+/* @pattern Scroll/Collapse | trigger scroll from the top, scroll-linked | reduced: rule (the bars switch at the threshold: data-collapsed)
+   The large title (data-motion-part="large") fades and the compact one ("compact") comes in over
+   --motion-collapse-range, the large title's height, which the script sets. */
+@supports (animation-timeline: scroll()) {
+  .motion-scroll-collapse [data-motion-part="large"] { animation: motion-exit-fade var(--motion-easing-loop) both; animation-timeline: scroll(); animation-range: 0 var(--motion-collapse-range); }
+  .motion-scroll-collapse [data-motion-part="compact"] { animation: motion-enter-fade var(--motion-easing-loop) both; animation-timeline: scroll(); animation-range: 0 var(--motion-collapse-range); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-scroll-collapse :is([data-motion-part="large"], [data-motion-part="compact"]) { animation: none; }
+  .motion-scroll-collapse:not([data-collapsed]) [data-motion-part="compact"], .motion-scroll-collapse[data-collapsed] [data-motion-part="large"] { visibility: hidden; }
+}
+
+/* @pattern Scroll/Minimize | trigger scrolling down (data-minimized); back on scrolling up, a tap on the current tab or focus inside | reduced: rule (the bar stays) */
+.motion-scroll-minimize { interpolate-size: allow-keywords; transition: width var(--motion-duration-enter-m) var(--motion-easing-enter); }
+.motion-scroll-minimize [data-motion-part="item"] { transition: opacity var(--motion-duration-enter-m) var(--motion-easing-enter); }
+.motion-scroll-minimize[data-minimized] { transition: width var(--motion-duration-exit-m) var(--motion-easing-exit); }
+.motion-scroll-minimize[data-minimized] [data-motion-part="item"]:not([data-selected]) { opacity: 0; transition: opacity var(--motion-duration-exit-m) var(--motion-easing-exit); }
+@media (prefers-reduced-motion: reduce) {
+  .motion-scroll-minimize[data-minimized] [data-motion-part="item"]:not([data-selected]) { opacity: 1; }
+}
+
+
+/* ---------- Scroll: websites and marketing pages ----------
+   Progressive enhancement: without the script (.motion-ready on html) or scroll timelines, content shows at rest. The
+   script adds .is-in once, when the element enters the viewport. */
+
+/* @pattern Scroll/Reveal | trigger inView, once | reduced: tokens (Distance/L is 0, the fade stays) */
+.motion-ready .motion-scroll-reveal { opacity: 0; transform: translateY(var(--motion-distance-l)); }
+.motion-ready .motion-scroll-reveal.is-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--motion-duration-enter-m) var(--motion-easing-enter), transform var(--motion-duration-enter-m) var(--motion-easing-enter);
+  transition-delay: calc(var(--i, 0) * var(--motion-duration-stagger));
+}
+
+/* @pattern Scroll/Stagger | trigger inView of a group, children --i apart | reduced: tokens (Stagger is 0: all at once, opacity only) */
+.motion-ready .motion-scroll-stagger > * { opacity: 0; transform: translateY(var(--motion-distance-l)); }
+.motion-ready .motion-scroll-stagger.is-in > * {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--motion-duration-enter-m) var(--motion-easing-enter), transform var(--motion-duration-enter-m) var(--motion-easing-enter);
+  transition-delay: calc(var(--i, 0) * var(--motion-duration-stagger));
+}
+
+/* @pattern Scroll/Parallax | trigger scroll, from 1024 only | reduced: rule (off) */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
+    .motion-scroll-parallax { animation: motion-scroll-parallax var(--motion-easing-loop) both; animation-timeline: view(); }
+  }
+}
+@keyframes motion-scroll-parallax {
+  from { transform: translateY(calc(var(--motion-distance-l) * -1)); }
+  to { transform: translateY(var(--motion-distance-l)); }
+}
+
+/* @pattern Scroll/Progress | trigger scroll, the reading position | reduced: same (the person drives it) */
+@supports (animation-timeline: scroll()) {
+  .motion-scroll-progress { transform-origin: 0 50%; animation: motion-scroll-progress var(--motion-easing-loop) both; animation-timeline: scroll(root); }
+}
+@keyframes motion-scroll-progress { from { transform: scaleX(0); } }
+
+
+/* ---------- Load: first render ---------- */
+
+/* @pattern Load/Fade | trigger load, once per session (the script sets .motion-seen on html after the first view) | reduced: tokens (Distance/L is 0, the fade stays) */
+.motion-load-fade { animation: motion-load-fade var(--motion-duration-enter-l) var(--motion-easing-enter) calc(var(--i, 0) * var(--motion-duration-stagger)) both; }
+.motion-seen .motion-load-fade { animation: none; }
+@keyframes motion-load-fade { from { opacity: 0; transform: translateY(var(--motion-distance-l)); } }
+
+
+/* ---------- Loop: while a state lasts ---------- */
+
+/* @pattern Loop/Spin | trigger loop, while work is in progress | reduced: same (keeps turning: the only sign of progress) */
+.motion-loop-spin { animation: motion-loop-spin var(--motion-duration-loop-spin) var(--motion-easing-loop) infinite; }
+@keyframes motion-loop-spin { to { transform: rotate(360deg); } }
+
+/* @pattern Loop/Shimmer | trigger loop, while content is being produced | reduced: rule (the band stops, the text stays Text/Secondary)
+   The band is the surface under the text: set --motion-shimmer-surface on a Raised, Floating or Sunken plane.
+   data-motion-part="skeleton" on a Surface/Sunken bar takes the band in Fill/Tertiary/Hover. */
+.motion-loop-shimmer {
+  background-image: linear-gradient(90deg, var(--color-text-secondary) 0%, var(--color-text-secondary) 30%, var(--motion-shimmer-surface, var(--color-surface-default)) 50%, var(--color-text-secondary) 70%, var(--color-text-secondary) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: motion-loop-shimmer var(--motion-duration-loop-shimmer) var(--motion-easing-loop) infinite;
+}
+.motion-loop-shimmer[data-motion-part="skeleton"], .motion-loop-shimmer [data-motion-part="skeleton"] {
+  background-image: linear-gradient(90deg, var(--color-surface-sunken) 0%, var(--color-surface-sunken) 30%, var(--color-fill-tertiary-hover) 50%, var(--color-surface-sunken) 70%, var(--color-surface-sunken) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  animation: motion-loop-shimmer var(--motion-duration-loop-shimmer) var(--motion-easing-loop) infinite;
+}
+@keyframes motion-loop-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-loop-shimmer { animation: none; background-image: none; color: var(--color-text-secondary); }
+  .motion-loop-shimmer[data-motion-part="skeleton"], .motion-loop-shimmer [data-motion-part="skeleton"] { animation: none; background-image: none; background-color: var(--color-surface-sunken); }
+}
+
+/* @pattern Loop/Glow | trigger loop, while the assistant listens, thinks or answers | reduced: tokens (Duration/Loop/Glow is 0, the glow stays still)
+   The component draws conic-gradient(from var(--motion-glow-angle), …). */
+@property --motion-glow-angle { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+.motion-loop-glow { animation: motion-loop-glow var(--motion-duration-loop-glow) var(--motion-easing-loop) infinite; }
+@keyframes motion-loop-glow { to { --motion-glow-angle: 360deg; } }
+
+/* @pattern Loop/Marquee | trigger loop, websites only; hover, focus or a tap pauses | reduced: rule (the row stops and wraps)
+   The track holds the items twice; the copy is aria-hidden. A hidden "Pause motion" button appears on keyboard focus
+   and sets data-paused on the wrapper (WCAG 2.2 SC 2.2.2 Pause, Stop, Hide (A)). */
+.motion-loop-marquee { display: flex; width: max-content; animation: motion-loop-marquee var(--motion-duration-loop-marquee) var(--motion-easing-loop) infinite; }
+:is(:hover, :focus-within, [data-paused]) > .motion-loop-marquee { animation-play-state: paused; }
+@keyframes motion-loop-marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .motion-loop-marquee { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
+  .motion-loop-marquee > [aria-hidden="true"] { display: none; }
+}

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+qa/report/
+artifact/out/
+.vercel/
+.DS_Store
